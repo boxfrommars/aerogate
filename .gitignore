@@ -1,4 +1,6 @@
 config.php
+ClientKeyPrivate.pem
+ServerKeyPublic.pem
 keys/*
 docs/*
 .settings
