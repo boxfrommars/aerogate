@@ -1,6 +1,6 @@
 keys/*
 docs/*
-config.php
+config.*
 .settings
 .buildpath
 .project
