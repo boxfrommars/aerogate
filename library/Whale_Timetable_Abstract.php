@@ -71,8 +71,6 @@ abstract class Whale_Timetable_Abstract implements Whale_Timetable_Interface
 		}
 		// DEBUG END
 		
-		print $result . "\n";
-		
 		$error_code = curl_errno($resource);
 		if ($error_code != 0) {
 			$error = curl_error($resource);
