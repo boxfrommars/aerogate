@@ -1,4 +1,10 @@
 <?php
+/**
+ * Класс для получения рейсов с помощью шлюза Galileo
+ * 
+ * @author xu
+ *
+ */
 class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 {
 	protected $_clientId;
@@ -19,13 +25,30 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		parent::__construct($options);
 	}
 	
+	/**
+	 * на основе ответа стоим список рейсов
+	 * @see Whale_Timetable_Abstract::_buildTimetable()
+	 */
 	protected function _buildTimetable($result)
 	{
-//		$result = base64_decode($result);
-// 		print 'GALILEO RESULT ' . print_r($result, true) . "\n";
+		$resultEncoded = base64_decode($result);
+		$key = openssl_get_privatekey('file:///home/xu/workspace/aerogate/ClientKeyPrivate.pem');
+		$xmlTextDecrypted = '';
+		$isDecrypted = openssl_private_decrypt($resultEncoded, $xmlTextDecrypted, $key);
+		
+		print 'GALILEO RESULT DECODED: ' . ($resultEncoded) . "\n";
+ 		print 'GALILEO RESULT DECODED LENGTH: ' . strlen($resultEncoded) . "\n";
+ 		print 'GALILEO RESULT IS DECRYPTED: ' . ($isDecrypted ? 'TRUE' : 'FALSE') . "\n";
+ 		print 'GALILEO RESULT DECRYPTED: ' . print_r($xmlTextDecrypted, true) . "\n";
 		return array();
 	}
 	
+	/**
+	 * строим данные для запроса
+	 * @param array $query массив запросов (см. Whale_Timetable_Abstract::$_defaultQuery)
+	 * @return array $data
+	 * @see Whale_Timetable_Abstract::_buildData()
+	 */
 	protected function _buildData($query) 
 	{
 		$query = array_merge($this->_defaultQuery, $query);
@@ -58,27 +81,40 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		
 		
 		$xmlData = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><pricing></pricing>');
-// 		$xmlData->addChild('Sort', 'time'); 
-// 		$xmlData->addChild('SortType', 'ASC'); 
+//  		$xmlData->addChild('Sort', 'time'); 
+//  		$xmlData->addChild('SortType', 'ASC'); 
 		$xmlData->addChild('Origin', $query['city_from']);
 		$xmlData->addChild('Destination', $query['city_to']);
-		$xmlData->addChild('DepDate', $query['date_to']);
-		$xmlData->addChild('ReturnDate', $query['date_back']);
-		$xmlData->addChild('Class', $this->_airClassMap[$query['air_class']]);
-		$xmlData->addChild('AdtNumber', $query['adult']);
-		$xmlData->addChild('ChdNumber', $query['child']);
-		$xmlData->addChild('InfNumber', $query['infant']);
-		$xmlData->addChild('Throw', $query['one_flight'] ? 'true' : 'false');
-		$xmlData->addChild('Type', 'avia');
+// 		$xmlData->addChild('DepDate', $query['date_to']);
+//  		$xmlData->addChild('ReturnDate', $query['date_back']);
+//  		$xmlData->addChild('Class', $this->_airClassMap[$query['air_class']]);
+//  		$xmlData->addChild('AdtNumber', $query['adult']);
+//  		$xmlData->addChild('ChdNumber', $query['child']);
+//  		$xmlData->addChild('InfNumber', $query['infant']);
+//  		$xmlData->addChild('Throw', $query['one_flight'] ? 'true' : 'false');
+//  		$xmlData->addChild('Type', 'avia');
 		
 		$xmlText = $xmlData->asXML();
-		print_r($xmlText);
-		$xmlTextEncoded = base64_encode($xmlText);
+		
+		// получаем ключ для шифрования
+		$publicKey = openssl_get_publickey('file:///home/xu/workspace/aerogate/ServerKeyPublic.pem');
+		$xmlTextEncrypted = '';
+		
+		// пытаемся зашифровать
+		$isEncrypted = openssl_public_encrypt($xmlText, $xmlTextEncrypted, $publicKey);
+		
+		if (defined('WHALE_TIMETABLE_DEBUG') && WHALE_TIMETABLE_DEBUG) {
+			print_r($xmlText);
+			print_r(strlen($xmlText) * 8);
+			print  "ENCRYPTED: " . $isEncrypted . "\n";
+		}
+		
+		$xmlTextEncoded = base64_encode($xmlTextEncrypted);
 		
 		$request = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><request></request>');
 		$request->addChild('ClientId', $this->_clientId);
 		$request->addChild('XmlText', $xmlTextEncoded);
 		
-		echo $request->asXML();
+		return array('query' => $request->asXML());
 	}
 }

@@ -46,7 +46,14 @@ abstract class Whale_Timetable_Abstract implements Whale_Timetable_Interface
 	abstract protected function _buildData($query);
 	abstract protected function _buildTimetable($query);
 	
-	
+	/**
+	 * 
+	 * отправляем массив данных $data на урл $url
+	 * @param array $data
+	 * @param string $url
+	 * @throws Exception
+	 * @return mixed
+	 */
 	protected function _sendRequest($data, $url) 
 	{
 		$resource = curl_init($url);
