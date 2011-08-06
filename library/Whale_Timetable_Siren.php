@@ -1,4 +1,8 @@
 <?php
+/**
+ * Класс для получения рейсов с помощью шлюза "сирена"
+ * @author Dmitry Groza (boxfrommars@gmail.com)
+ */
 class Whale_Timetable_Siren extends Whale_Timetable_Abstract 
 {
 	protected $_password;
@@ -13,6 +17,12 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 		}
 		parent::__construct($options);
 	}
+    
+    protected function _buildTimetable($result)
+    {
+        $result = json_decode($result);
+        return array();
+    }
 	
 	protected function _buildData($query) {
 		$request = array(
@@ -25,14 +35,6 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 			'json' => json_encode($request),
 		);
 		return $data;
-	}
-	
-	protected function _buildTimetable($result)
-	{
-		$result = json_decode($result);
-		file_put_contents('/tmp/siren.json', print_r($result, true));
-		// что-то делаем, чтобы получить стандартный список перелётов
-		return array();
 	}
 	
 }

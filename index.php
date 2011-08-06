@@ -6,11 +6,12 @@ require_once 'config.php';
 $TimetablePull = new Whale_Timetable_Pull($config);
 
 $query = array(
-	'city_from' => 'МОВ',
-	'city_to' => 'СПТ',
-	'date_to' => '15.09.2011'
+	'city_from' => 'KRR',
+	'city_to' => 'VCE',
+	'date_to' => '03.10.2011'
 );
 
 $queryId = 1;
-
 $timetable = $TimetablePull->getTimetable($query);
+
+print_r($timetable);

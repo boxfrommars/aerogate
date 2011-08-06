@@ -1,5 +1,5 @@
 <?php
-abstract class Whale_Timetable_Abstract implements Whale_Timetable_Interface 
+abstract class Whale_Timetable_Abstract
 {
 	protected $_url;
 	

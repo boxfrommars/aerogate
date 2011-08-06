@@ -1,5 +1,4 @@
 <?php
-require_once 'Whale_Timetable_Interface.php';
 require_once 'Whale_Timetable_Abstract.php';
 require_once 'Whale_Timetable_Siren.php';
 require_once 'Whale_Timetable_Galileo.php';
@@ -7,7 +6,7 @@ require_once 'Whale_Timetable_Galileo.php';
 /**
  * @author Dmitry Groza (boxfrommars@gmail.com)
  */
-class Whale_Timetable_Pull implements Whale_Timetable_Interface 
+class Whale_Timetable_Pull
 {
     
 	protected $_gateways;
@@ -35,6 +34,7 @@ class Whale_Timetable_Pull implements Whale_Timetable_Interface
 			throw new Exception('Invalid options for gateways');
 		}
 	}
+	
 	
 	public function setGateway($name, $options)
 	{

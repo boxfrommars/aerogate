@@ -52,16 +52,30 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 	 */
 	protected function _buildTimetable($result)
 	{
+		// если возвратился ответ с ошибками 1, 2, 3, то ответ не закодирован, поэтому сначала проверяем 
+		// не является ли ответ незаифрованным sql, и какая ошибка в нём содержится
+		try {
+            @$xmlData = new SimpleXMLElement($result);	
+            if ($xmlData->ErrorCode > 0) {
+                print_r($xmlData);
+                return array();
+            }; // ошибки 0, 1, 2
+		} catch (Exception $e) {} // не является, значит всё хорошо, будем расшифровывать
 		
-// 		$resultEncoded = base64_decode($result);
-// 		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
-// 		file_put_contents('/tmp/avia.xml', $resultEncrypted);
-//  		print "GALILEO RESULT DECRYPTED: \n" . print_r($resultEncrypted, true) . "\n";
-		$resultEncrypted = file_get_contents('/tmp/avia.xml');
-		$xmlData = new SimpleXMLElement($resultEncrypted);
 		
+ 		$resultEncoded = base64_decode($result);
+ 		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
+ //		file_put_contents('/tmp/galileo.xml', $resultEncrypted);
+
+ 		$xmlTimetable = new SimpleXMLElement($resultEncrypted);
+        
+		if (!empty($xmlTimetable->ErrorCode)) {
+            print_r($xmlTimetable);
+            return array(); // ошибки 3, 4
+		}
 		
-		return array();
+		$timetable = $this->_parseXML($xmlTimetable);
+		return $timetable;
 	}
 	
 	/**
@@ -98,12 +112,45 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		return array('query' => $request->asXML());
 	}
 	
-	protected function _sendRequest($data, $url) 
+	protected function _parseXml($xmlTimetable)
 	{
-//		return parent::_sendRequest($data, $url);
-		return true;
+		$timetable = array();
+		
+		foreach ($xmlTimetable->Variant as $variant) {
+			$segments = array();
+			$segmentCounter = 0;
+			foreach ($variant->FlightsTo->Flight as $xmlSegment) {
+				$segment = array(
+					'price' => NULL,
+					'datefly' => date('Y-m-d', strtotime($xmlSegment->DeptDate)),
+					'timedep' => date('h:i:s', strtotime($xmlSegment->DeptDate)),
+					'timearr' => date('h:i:s', strtotime($xmlSegment->ArrvDate)),
+					'airportdep' => (string) $xmlSegment->Origin,
+					'airportarr' => (string) $xmlSegment->Destination,
+					'airfly' => (string) $xmlSegment->Company,
+					'airplane' => (string) $xmlSegment->Airplane,
+					'class' => array_search((string) $xmlSegment->BaseClass, $this->_airClassMap),
+					'flight_time' => (string) $xmlSegment->FlightTime,
+					'descr' => '',
+					'segment_num' => $segmentCounter++, 
+				);
+				$segments[] = $segment;
+			}
+			
+			$summary = array(
+				'price' => (string) $variant->TotalPrice,
+//				'offerdate' => time(),
+//				'live' => NULL,
+//				'status' => 1,
+//				'user_id' => 1,
+//				'offer_id' => 1,
+				'segments' => $segments,
+			);
+			
+			$timetable[] = $summary;
+		}
+		return $timetable;
 	}
-	
 	
 	// по-хорошему, то что ниже не относится к этому классу, а является просто функциями, но чтобы не засорять пространство
 	// пусть побудут методами
