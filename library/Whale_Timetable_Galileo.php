@@ -122,7 +122,7 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 			$segmentCounter = 0;
 			foreach ($variant->FlightsTo->Flight as $xmlSegment) {
 				$segment = array(
-					'price' => NULL,
+					'price' => '00.00',
 					'datefly' => date('Y-m-d', strtotime($xmlSegment->DeptDate)),
 					'timedep' => date('h:i:s', strtotime($xmlSegment->DeptDate)),
 					'timearr' => date('h:i:s', strtotime($xmlSegment->ArrvDate)),
