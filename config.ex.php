@@ -13,3 +13,9 @@ $config = array(
 		),
 	)
 );
+
+$configDb = array(
+	'db' => 'mysql:host=localhost;dbname=aero',
+	'user' => 'root',
+	'password' => 'password',
+);
