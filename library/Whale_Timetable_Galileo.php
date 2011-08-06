@@ -60,9 +60,10 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
                 print_r($xmlData);
                 return array();
             }; // ошибки 0, 1, 2
-		} catch (Exception $e) {} // не является, значит всё хорошо, будем расшифровывать
-		
-		
+		} catch (Exception $e) {
+			// не является, значит всё хорошо, будем расшифровывать
+		} 
+			
  		$resultEncoded = base64_decode($result);
  		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
  //		file_put_contents('/tmp/galileo.xml', $resultEncrypted);
@@ -138,6 +139,7 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 			}
 			
 			$summary = array(
+				'gateway' => 'galileo',
 				'price' => (string) $variant->TotalPrice,
 //				'offerdate' => time(),
 //				'live' => NULL,
