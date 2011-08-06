@@ -1,20 +1,31 @@
 <?php
 /**
  * Класс для получения рейсов с помощью шлюза Galileo
- * 
- * @author xu
- *
+ * @author Dmitry Groza (boxfrommars@gmail.com)
  */
 class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 {
+	// id клиента
 	protected $_clientId;
+	
+	// приватный ключ клиента для расшифровки ответов от сервера
+	protected $_clientPrivateKey;
+	
+	// публичный ключ сервера для rsa-шифрования запросов 
+	protected $_serverPublicKey;
+	
+	// соответствия между классами пассажира в системе галилео и нашим форматом
 	protected $_airClassMap = array(
-			'1' => 'E',
-			'2' => 'B',
-			'3' => 'F',
-		);
+		'1' => 'E',
+		'2' => 'B',
+		'3' => 'F',
+	);
 	
-	
+	/**
+	 * устанавливаем id клиента, и ключи для шифрования/расшифровки
+	 * @param array $options
+	 * @throws Exception если отсутствует один из параметров (client_id, server_public_key и client_private_key)
+	 */
 	public function __construct($options)
 	{
 		if (empty($options['client_id'])) {
@@ -22,24 +33,34 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		} else {
 			$this->_clientId = $options['client_id'];
 		}
+		if (empty($options['server_public_key'])) {
+			throw new Exception('server_public_key option for Galileo is missing');
+		} else {
+			$this->_serverPublicKey = $options['server_public_key'];
+		}
+		if (empty($options['client_private_key'])) {
+			throw new Exception('client_private_key option for Galileo is missing');
+		} else {
+			$this->_clientPrivateKey = $options['client_private_key'];
+		}
 		parent::__construct($options);
 	}
 	
 	/**
-	 * на основе ответа стоим список рейсов
+	 * на основе ответа стоим список рейсов. сначала декодируем из base64, потом 
 	 * @see Whale_Timetable_Abstract::_buildTimetable()
 	 */
 	protected function _buildTimetable($result)
 	{
-		$resultEncoded = base64_decode($result);
-		$key = openssl_get_privatekey('file:///home/xu/workspace/aerogate/ClientKeyPrivate.pem');
-		$xmlTextDecrypted = '';
-		$isDecrypted = openssl_private_decrypt($resultEncoded, $xmlTextDecrypted, $key);
 		
-		print 'GALILEO RESULT DECODED: ' . ($resultEncoded) . "\n";
- 		print 'GALILEO RESULT DECODED LENGTH: ' . strlen($resultEncoded) . "\n";
- 		print 'GALILEO RESULT IS DECRYPTED: ' . ($isDecrypted ? 'TRUE' : 'FALSE') . "\n";
- 		print 'GALILEO RESULT DECRYPTED: ' . print_r($xmlTextDecrypted, true) . "\n";
+// 		$resultEncoded = base64_decode($result);
+// 		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
+// 		file_put_contents('/tmp/avia.xml', $resultEncrypted);
+//  		print "GALILEO RESULT DECRYPTED: \n" . print_r($resultEncrypted, true) . "\n";
+		$resultEncrypted = file_get_contents('/tmp/avia.xml');
+		$xmlData = new SimpleXMLElement($resultEncrypted);
+		
+		
 		return array();
 	}
 	
@@ -53,62 +74,21 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 	{
 		$query = array_merge($this->_defaultQuery, $query);
 		
-		// 		<pricing>
-		// 		*<Currency>EUR</Currency>			валюта оценки (не обяз., по умолч. – RUB)
-		// 		<Sort>time</Sort>                       сортировать по времени
-		// 		<SortType>DESC</SortType>			сортировать по убыванию
-		// 		<Origin>KRR</Origin>				откуда
-		// 		<Destination>MOW</Destination>		куда
-		// 		<DepDate>23.12.2010</DepDate>      	дата вылета туда
-		// 		<ReturnDate>31.12.2010</ReturnDate>     дата вылета обратно
-		// 		<Class>E</Class>    				класс
-		// 		<AdtNumber>1</AdtNumber>			кол-во взрослых
-		// 		<ChdNumber>0</ChdNumber>			кол-во детей (до 12 лет)
-		// 		<InfNumber>0</InfNumber>      		кол-во детей (до 2 лет)
-		// 		<Through>true</Through>
-		// 		<Type>avia</Type>
-		// 		</pricing>
-		
-// 				'city_from' => null,
-// 				'city_to' => null,
-// 				'date_to' => null,
-// 				'date_back' => '',
-// 				'air_class' => 1,
-// 				'one_flight' => 0,
-// 				'adult' => 1,
-// 				'child' => 0,
-// 				'infant' => 0
-		
-		
 		$xmlData = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><pricing></pricing>');
-//  		$xmlData->addChild('Sort', 'time'); 
-//  		$xmlData->addChild('SortType', 'ASC'); 
 		$xmlData->addChild('Origin', $query['city_from']);
-		$xmlData->addChild('Destination', $query['city_to']);
-// 		$xmlData->addChild('DepDate', $query['date_to']);
-//  		$xmlData->addChild('ReturnDate', $query['date_back']);
-//  		$xmlData->addChild('Class', $this->_airClassMap[$query['air_class']]);
-//  		$xmlData->addChild('AdtNumber', $query['adult']);
-//  		$xmlData->addChild('ChdNumber', $query['child']);
-//  		$xmlData->addChild('InfNumber', $query['infant']);
-//  		$xmlData->addChild('Throw', $query['one_flight'] ? 'true' : 'false');
-//  		$xmlData->addChild('Type', 'avia');
-		
+ 		$xmlData->addChild('Destination', $query['city_to']);
+		$xmlData->addChild('DepDate', $query['date_to']);
+  		$xmlData->addChild('ReturnDate', $query['date_back']);
+ 		$xmlData->addChild('Class', $this->_airClassMap[$query['air_class']]);
+ 		$xmlData->addChild('AdtNumber', $query['adult']);
+ 		$xmlData->addChild('ChdNumber', $query['child']);
+ 		$xmlData->addChild('InfNumber', $query['infant']);
+ 		$xmlData->addChild('Through', $query['one_flight'] ? 'true' : 'false');
+ 		$xmlData->addChild('Type', 'avia');
+
 		$xmlText = $xmlData->asXML();
 		
-		// получаем ключ для шифрования
-		$publicKey = openssl_get_publickey('file:///home/xu/workspace/aerogate/ServerKeyPublic.pem');
-		$xmlTextEncrypted = '';
-		
-		// пытаемся зашифровать
-		$isEncrypted = openssl_public_encrypt($xmlText, $xmlTextEncrypted, $publicKey);
-		
-		if (defined('WHALE_TIMETABLE_DEBUG') && WHALE_TIMETABLE_DEBUG) {
-			print_r($xmlText);
-			print_r(strlen($xmlText) * 8);
-			print  "ENCRYPTED: " . $isEncrypted . "\n";
-		}
-		
+		$xmlTextEncrypted = $this->_encryptRSA($xmlText, $this->_serverPublicKey);
 		$xmlTextEncoded = base64_encode($xmlTextEncrypted);
 		
 		$request = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><request></request>');
@@ -116,5 +96,53 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		$request->addChild('XmlText', $xmlTextEncoded);
 		
 		return array('query' => $request->asXML());
+	}
+	
+	protected function _sendRequest($data, $url) 
+	{
+//		return parent::_sendRequest($data, $url);
+		return true;
+	}
+	
+	
+	// по-хорошему, то что ниже не относится к этому классу, а является просто функциями, но чтобы не засорять пространство
+	// пусть побудут методами
+	
+	/**
+	 * расшифровываем с помощью rsa-ключа т.к. данные могут быть длиннее ключа, то сначала режем 
+	 * по 128 символов (для 1024 ключа) и расшифровываем кусочки, которые склеиваем снова.
+	 * @param string $encryptedString зашифрованная 1024-битным ключом строка
+	 * @param string $privateKey путь к приватному ключу для расшифровки (в формате "file:///home/user/.../private.pem")
+	 */
+	protected function _decryptRSA($encryptedString, $privateKey) 
+	{
+		$decryptedString = '';
+		$encryptedParts = str_split($encryptedString, 128);
+		
+		$privateKey = openssl_get_privatekey($privateKey);
+		foreach ($encryptedParts as $part) {
+			openssl_private_decrypt($part, $decryptedPart, $privateKey);
+			$decryptedString .= $decryptedPart;
+		}
+		return $decryptedString;
+	}
+	
+	/**
+	* шифруем с помощью rsa-ключа т.к. данные могут быть длиннее ключа, то сначала режем
+	* по 128 символов (для 1024 ключа) и шифруем части, которые склеиваем снова.
+	* @param string $string строка для шифрования 1024-битным ключом
+	* @param string $publicKey путь к публичному ключу для шифрования (в формате "file:///home/user/.../public.pem")
+	*/
+	protected function _encryptRSA($string, $publicKey)
+	{
+		$encryptedString = '';
+		$stringParts = str_split($string, 100);
+		
+		$publicKey = openssl_get_publickey($publicKey);
+		foreach ($stringParts as $part) {
+			openssl_public_encrypt($part, $encryptedPart, $publicKey);
+			$encryptedString .= $encryptedPart;
+		}
+		return $encryptedString;
 	}
 }

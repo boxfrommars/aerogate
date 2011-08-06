@@ -63,20 +63,8 @@ abstract class Whale_Timetable_Abstract implements Whale_Timetable_Interface
 		
 		curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, FALSE);
 		curl_setopt($resource, CURLOPT_SSL_VERIFYHOST, FALSE);
-// 		curl_setopt($resource, CURLOPT_CAINFO, "cacert.pem");
 		
-		$result = null;
 		$result = curl_exec($resource);
-		
-		// DEBUG BEGIN
-		if (defined('WHALE_TIMETABLE_DEBUG') && WHALE_TIMETABLE_DEBUG) {
-// 			print_r(curl_getinfo($resource));
-			print "REQUEST: \n";
- 			print_r($data);
-			print "RESULT : \n";
-			print $result . "\n";
-		}
-		// DEBUG END
 		
 		$error_code = curl_errno($resource);
 		if ($error_code != 0) {

@@ -22,13 +22,15 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 		
 		$data = array(
 			'password' => $this->_password,
-			'body' => json_encode($request),
+			'json' => json_encode($request),
 		);
 		return $data;
 	}
 	
 	protected function _buildTimetable($result)
 	{
+		$result = json_decode($result);
+		file_put_contents('/tmp/siren.json', print_r($result, true));
 		// что-то делаем, чтобы получить стандартный список перелётов
 		return array();
 	}
