@@ -54,35 +54,36 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 	{
 		// если возвратился ответ с ошибками 1, 2, 3, то ответ не закодирован, поэтому сначала проверяем 
 		// не является ли ответ незаифрованным sql, и какая ошибка в нём содержится
+		// получается немножко идиотская ситуация: если здесь выбросится исключение, то всё в порядке -- ответ
+		// не является xml, а значит это не ошибка сервера, связанная с шифрованием
+		$xmlError = false;
 		try {
             @$xmlData = new SimpleXMLElement($result);	
-            if ($xmlData->ErrorCode > 0) {
-                print_r($xmlData);
-                return array();
-            }; // ошибки 0, 1, 2
-		} catch (Exception $e) {
-			// не является, значит всё хорошо, будем расшифровывать
-		} 
-			
- 		$resultEncoded = base64_decode($result);
- 		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
- //		file_put_contents('/tmp/galileo.xml', $resultEncrypted);
-
- 		$xmlTimetable = new SimpleXMLElement($resultEncrypted);
-        
-		if (!empty($xmlTimetable->ErrorCode)) {
-            print_r($xmlTimetable);
-            return array(); // ошибки 3, 4
-		}
+            $xmlError = print_r($xmlData, true);
+		} catch (Exception $e) {} 
 		
-		$timetable = $this->_parseXML($xmlTimetable);
-		return $timetable;
+		if (!empty($xmlError)) {
+			throw new Exception($xmlError);
+		} else {
+	 		$resultEncoded = base64_decode($result);
+	 		$resultEncrypted = $this->_decryptRSA($resultEncoded, $this->_clientPrivateKey);
+	
+	 		$xmlTimetable = new SimpleXMLElement($resultEncrypted);
+	        
+			if (!empty($xmlTimetable->ErrorCode)) {
+	            print_r($xmlTimetable);
+	            return array(); // ошибки 3, 4
+			}
+			
+			$timetable = $this->_parseXML($xmlTimetable);
+			return $timetable;
+		}
 	}
 	
 	/**
 	 * строим данные для запроса
 	 * @param array $query массив запросов (см. Whale_Timetable_Abstract::$_defaultQuery)
-	 * @return array $data
+	 * @return array $data массив, который передастся параметрами в запросе к шлюзу
 	 * @see Whale_Timetable_Abstract::_buildData()
 	 */
 	protected function _buildData($query) 
@@ -100,12 +101,14 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
  		$xmlData->addChild('InfNumber', $query['infant']);
  		$xmlData->addChild('Through', $query['one_flight'] ? 'true' : 'false');
  		$xmlData->addChild('Type', 'avia');
-
+		
+ 		// получаем строку xml
 		$xmlText = $xmlData->asXML();
 		
 		$xmlTextEncrypted = $this->_encryptRSA($xmlText, $this->_serverPublicKey);
 		$xmlTextEncoded = base64_encode($xmlTextEncrypted);
 		
+		//  строим xml, который отошлём серверу
 		$request = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><request></request>');
 		$request->addChild('ClientId', $this->_clientId);
 		$request->addChild('XmlText', $xmlTextEncoded);
@@ -113,13 +116,20 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 		return array('query' => $request->asXML());
 	}
 	
-	protected function _parseXml($xmlTimetable)
+	/**
+	 * строим из xml массив предложений
+	 * Enter description here ...
+	 * @param unknown_type $xmlTimetable
+	 */
+	protected function _parseXml(SimpleXMLElement $xmlTimetable)
 	{
 		$timetable = array();
 		
 		foreach ($xmlTimetable->Variant as $variant) {
 			$segments = array();
 			$segmentCounter = 0;
+			
+			// сначала добавляем сегменты перелёта туда
 			foreach ($variant->FlightsTo->Flight as $xmlSegment) {
 				$segment = array(
 					'price' => '00.00',
@@ -137,15 +147,31 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 				);
 				$segments[] = $segment;
 			}
+			// если есть добавляем сегменты перелёта обратно
+			if (!empty($variant->FlightsBack)) {
+				foreach ($variant->FlightsBack->Flight as $xmlSegment) {
+					$segment = array(
+						'price' => '00.00',
+						'datefly' => date('Y-m-d', strtotime($xmlSegment->DeptDate)),
+						'timedep' => date('h:i:s', strtotime($xmlSegment->DeptDate)),
+						'timearr' => date('h:i:s', strtotime($xmlSegment->ArrvDate)),
+						'airportdep' => (string) $xmlSegment->Origin,
+						'airportarr' => (string) $xmlSegment->Destination,
+						'airfly' => (string) $xmlSegment->Company,
+						'airplane' => (string) $xmlSegment->Airplane,
+						'class' => array_search((string) $xmlSegment->BaseClass, $this->_airClassMap),
+						'flight_time' => (string) $xmlSegment->FlightTime,
+						'descr' => '',
+						'segment_num' => $segmentCounter++, 
+					);
+					$segments[] = $segment;
+				}
+			}
 			
+			// саммари предложения, на всякий случай указываем, что предложение получено от галилео
 			$summary = array(
 				'gateway' => 'galileo',
 				'price' => (string) $variant->TotalPrice,
-//				'offerdate' => time(),
-//				'live' => NULL,
-//				'status' => 1,
-//				'user_id' => 1,
-//				'offer_id' => 1,
 				'segments' => $segments,
 			);
 			

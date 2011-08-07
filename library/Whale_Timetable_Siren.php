@@ -8,6 +8,11 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 	protected $_password;
 	protected $_url;
 
+	/**
+	 * необходимы параметры -- 
+	 * @param array $options
+	 * @throws Exception
+	 */
 	public function __construct($options)
 	{
 		if (empty($options['password'])) {
@@ -21,10 +26,12 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 	protected function _buildTimetable($result)
 	{
 		$timetableData = json_decode($result);
-
-		if ($timetableData->error_type == 0) { // ошибок нет
-//			print_r($timetableData);
-			
+		$timetable = array();
+		
+		// проверяем, есть ли ошибки (ошибку с кодом "1" не учитываем, т.к. это -- отсутствие рейсов, вполне нормальный вариант)
+		if ($timetableData->error_type != 0 && $timetableData->error_type != 1) { 
+			throw new Exception(print_r($timetableData, true));
+		} else {
 			foreach ($timetableData->response as $variant) {
 				$segments = array();
 				$segmentCounter = 0;
@@ -59,16 +66,17 @@ class Whale_Timetable_Siren extends Whale_Timetable_Abstract
 				
 				$timetable[] = $summary;
 			}
-			
-			
-		} else {
-			print_r($timetableData);
-			return array();
 		}
 
 		return $timetable;
 	}
-
+	
+	/**
+	* строим данные для запроса
+	* @param array $query массив запросов (см. Whale_Timetable_Abstract::$_defaultQuery)
+	* @return array $data массив, который передастся параметрами в запросе к шлюзу
+	* @see Whale_Timetable_Abstract::_buildData()
+	*/
 	protected function _buildData($query) {
 		$request = array(
 			'header' =>  array('request_type' => "get_timetable"),

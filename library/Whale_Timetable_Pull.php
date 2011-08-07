@@ -42,21 +42,16 @@ class Whale_Timetable_Pull
 		$this->_gateways[$name] = new $className($options);
 	}
 	
-	public function getGateways() 
-	{
-		return $this->_gateways;
-	}
-	
 	/**
 	 * Получаем расписание от каждого из шлюзов, строим общий массив, отдаём
-	 * @param unknown_type $params
+	 * @param unknown_type $query см. Whale_Timetable_Abstract::$_defaultQuery
 	 */
-	public function getTimetable($params)
+	public function getTimetable($query)
 	{
 		$timetable = array();
-		foreach ($this->getGateways() as $gateway) {
+		foreach ($this->_gateways as $gateway) {
 			try {
-				$timetable = array_merge($timetable, $gateway->getTimetable($params));
+				$timetable = array_merge($timetable, $gateway->getTimetable($query));
 			} catch (Exception $e) {
 				if (defined('WHALE_TIMETABLE_DEBUG') && WHALE_TIMETABLE_DEBUG) {
 					print $e->getMessage() . "\n";
