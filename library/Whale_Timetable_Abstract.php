@@ -1,9 +1,16 @@
 <?php
+/**
+ * абстрактный класс для шлюзов
+ * реализовывает отправку запроса на сервер шлюза
+ * @author Dmitry Groza (boxfrommars@gmail.com)
+ */
 abstract class Whale_Timetable_Abstract
 {
 	protected $_url;
 	
 	/**
+	 * дефолтные параметры запроса
+	 * 
 	 * city_from — код города отправления.
 	 * city_to — код города назначения.
 	 * date_to — дата отправления (формат dd.mm.yyyy).
@@ -50,7 +57,7 @@ abstract class Whale_Timetable_Abstract
 	 * 
 	 * отправляем массив данных $data на урл $url
 	 * @param array $data
-	 * @param string $url
+	 * @param string $url 
 	 * @throws Exception
 	 * @return mixed
 	 */
@@ -61,13 +68,14 @@ abstract class Whale_Timetable_Abstract
 		curl_setopt($resource, CURLOPT_POST, 1);
 		curl_setopt($resource, CURLOPT_POSTFIELDS, $data);
 		
+		// если будем отправлять по https, то, чтобы курл не ругался, нужно отключить эти опции
 		curl_setopt($resource, CURLOPT_SSL_VERIFYPEER, FALSE);
 		curl_setopt($resource, CURLOPT_SSL_VERIFYHOST, FALSE);
 		
 		$result = curl_exec($resource);
 		
 		$error_code = curl_errno($resource);
-		if ($error_code != 0) {
+		if ($error_code != 0) { // есть ошибки, бросаем эксепшн
 			$error = curl_error($resource);
 			curl_close($resource);	
 			throw new Exception("cURL error (code {$error_code}): {$error}\n");

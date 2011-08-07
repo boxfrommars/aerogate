@@ -118,7 +118,6 @@ class Whale_Timetable_Galileo extends Whale_Timetable_Abstract
 	
 	/**
 	 * строим из xml массив предложений
-	 * Enter description here ...
 	 * @param unknown_type $xmlTimetable
 	 */
 	protected function _parseXml(SimpleXMLElement $xmlTimetable)
