@@ -2,6 +2,8 @@
 /**
  * Модель для сохранения предложений перелётов
  * @author Dmitry Groza (boxfrommars@gmail.com)
+ * @TODO стоит написать ленивые геттеры для подготовленных запросов
+ * @TODO стоит заменить ? на именованные плейсхолдеры, чтобы не путаться
  */
 class Whale_Timetable_Model 
 {
@@ -10,8 +12,6 @@ class Whale_Timetable_Model
 	protected $_getAirportIdPrepared;
 	protected $_getAirplaneIdPrepared;
 	protected $_getAircompanyIdPrepared;
-	protected $_insertOfferHeadPrepared;
-	protected $_insertOfferPrepared;
 	
 	protected $_getAirportCodePrepared;
 	protected $_getAirplaneCodePrepared;
@@ -19,7 +19,12 @@ class Whale_Timetable_Model
 	protected $_getCityCodePrepared;
 	protected $_getCountryCodePrepared;
 	
-	protected $_airports = array();
+	protected $_insertOfferHeadPrepared;
+	protected $_insertOfferPrepared;
+	
+	// здесь "кэшируем" соответствия имя=>id аэропортов/самолётов/компаний, так как при сохранении 
+	// часто нам будут нужны одни и те же id, и глупо каждый раз лезть в базу
+	protected $_airports = array();     
 	protected $_airplanes = array();
 	protected $_aircompanies = array();
 	
