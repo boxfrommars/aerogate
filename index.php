@@ -17,11 +17,10 @@ $timetable = $TimetablePull->getTimetable($query);
 
 print_r($timetable);
 
-$userId = 1;
-$orderId = 1;
-$live = null;
-
 $pdo = new PDO($configDb['db'], $configDb['user'], $configDb['password'], array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 $TimetableModel = new Whale_Timetable_Model($pdo);
 
+$userId = 1;
+$orderId = 1;
+$live = null;
 $TimetableModel->save($timetable, $userId, $orderId, $live);

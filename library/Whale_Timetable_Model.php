@@ -13,6 +13,12 @@ class Whale_Timetable_Model
 	protected $_insertOfferHeadPrepared;
 	protected $_insertOfferPrepared;
 	
+	protected $_getAirportCodePrepared;
+	protected $_getAirplaneCodePrepared;
+	protected $_getAircompanyCodePrepared;
+	protected $_getCityCodePrepared;
+	protected $_getCountryCodePrepared;
+	
 	protected $_airports = array();
 	protected $_airplanes = array();
 	protected $_aircompanies = array();
@@ -25,9 +31,18 @@ class Whale_Timetable_Model
 	{
 		$this->_db = $db;
 		$this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		
+		// наверно, стоит это вынести в "ленивые" геттеры
 		$this->_getAirportIdPrepared = $this->_db->prepare('SELECT `id` FROM `airports` WHERE ru_code = ? OR en_code = ?');
 		$this->_getAirplaneIdPrepared = $this->_db->prepare('SELECT `id` FROM `airplanes` WHERE ru_code = ? OR en_code = ?');
 		$this->_getAircompanyIdPrepared = $this->_db->prepare('SELECT `id` FROM `aircompanies` WHERE ru_code = ? OR en_code = ?');
+		
+		// для получения кода по id. так как и сирена и галилео понимают en_code, то получаем только их
+		$this->_getAirportCodePrepared = $this->_db->prepare('SELECT `en_code` FROM `airports` WHERE `id` = ?');
+		$this->_getAirplaneCodePrepared = $this->_db->prepare('SELECT `en_code` FROM `airplanes` WHERE `id` = ?');
+		$this->_getAircompanyCodePrepared = $this->_db->prepare('SELECT `en_code` FROM `aircompanies` WHERE `id` = ?');
+		$this->_getCityCodePrepared = $this->_db->prepare('SELECT `en_code` FROM `cities` WHERE `id` = ?');
+		$this->_getCountryCodePrepared = $this->_db->prepare('SELECT `en_code` FROM `countries` WHERE `id` = ?');
 		
 		$this->_insertOfferHeadPrepared = $this->_db->prepare('
 			INSERT INTO `offers_head` 
@@ -122,6 +137,12 @@ class Whale_Timetable_Model
 		return $this->_airports[$name];
 	}
 	
+	public function getAirportCode($id)
+	{
+		$this->_getAirportCodePrepared->execute(array($id));
+		return $this->_getAirportCodePrepared->fetchColumn();
+	}
+	
 	/**
 	 * по имени (неважно, русскому или англ. возвращает id самолёта)
 	 * сначала проверяем, получали ли уже из базы, если да, быстро возвращаем, нет -- смотрим в базе
@@ -136,6 +157,12 @@ class Whale_Timetable_Model
 		return $this->_airplanes[$name];
 	}
 	
+	public function getAirplaneCode($id)
+	{
+		$this->_getAirplaneCodePrepared->execute(array($id));
+		return $this->_getAirplaneCodePrepared->fetchColumn();
+	}
+	
 	/**
 	 * по имени (неважно, русскому или англ. возвращает id авиакомпании)
 	 * сначала проверяем, получали ли уже из базы, если да, быстро возвращаем, нет -- смотрим в базе
@@ -148,5 +175,24 @@ class Whale_Timetable_Model
 			$this->_aircompanies[$name] = $this->_getAircompanyIdPrepared->fetchColumn();
 		}
 		return $this->_aircompanies[$name];
+	}
+	
+	public function getAircompanyCode($id)
+	{
+		$this->_getAircompanyCodePrepared->execute(array($id));
+		return $this->_getAircompanyCodePrepared->fetchColumn();
+	}
+	
+	// также и для городов
+	public function getCityCode($id)
+	{
+		$this->_getCityCodePrepared->execute(array($id));
+		return $this->_getCityCodePrepared->fetchColumn();
+	}
+	
+	public function getCountryCode($id)
+	{
+		$this->_getCountryCodePrepared->execute(array($id));
+		return $this->_getCountryCodePrepared->fetchColumn();
 	}
 }

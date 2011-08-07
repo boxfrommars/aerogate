@@ -90,4 +90,12 @@
 	$TimetableModel = new Whale_Timetable_Model($pdo);
 	$TimetableModel->save($timetable, $userId, $orderId, $live);
 
+также можно получить код, для запроса к шлюзу по id города/страны/аэропорта из базы:
+
+	echo $TimetableModel->getAircompanyCode(3) . "\n";
+	echo $TimetableModel->getAirportCode(3) . "\n";
+	echo $TimetableModel->getAirplaneCode(3) . "\n";
+	echo $TimetableModel->getCityCode(3) . "\n";
+	echo $TimetableModel->getCountryCode(3) . "\n";
+
 пример базы для Whale_Timetable_Model в папке deploy 
