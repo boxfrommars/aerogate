@@ -4,6 +4,7 @@ require_once 'Whale_Timetable_Siren.php';
 require_once 'Whale_Timetable_Galileo.php';
 
 /**
+ * пул для шлюзов
  * @author Dmitry Groza (boxfrommars@gmail.com)
  */
 class Whale_Timetable_Pull
@@ -35,7 +36,11 @@ class Whale_Timetable_Pull
 		}
 	}
 	
-	
+	/**
+	 * добавляем шлюз 
+	 * @param string $name имя шлюза
+	 * @param array $options опции шлюза
+	 */
 	public function setGateway($name, $options)
 	{
 		$className = 'Whale_Timetable_'  . ucfirst($name); // если есть аутолоадер, то нужно будет подправить этот метод
@@ -43,8 +48,9 @@ class Whale_Timetable_Pull
 	}
 	
 	/**
-	 * Получаем расписание от каждого из шлюзов, строим общий массив, отдаём
+	 * Получаем расписание от каждого из шлюзов, строим общий массив, отдаём. вид массива см. в документации:
 	 * @param unknown_type $query см. Whale_Timetable_Abstract::$_defaultQuery
+	 * @return array $timetable
 	 */
 	public function getTimetable($query)
 	{

@@ -88,6 +88,6 @@
 	$pdo = new PDO('mysql:host=localhost;dbname=aero', 'username', 'password', 
 		array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 	$TimetableModel = new Whale_Timetable_Model($pdo);
-	$TimetableModel->save($timetable);
+	$TimetableModel->save($timetable, $userId, $orderId, $live);
 
-пример базы для /Whale_Timetable_Model/ в папке deploy 
+пример базы для Whale_Timetable_Model в папке deploy 

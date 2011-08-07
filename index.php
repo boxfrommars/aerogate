@@ -12,15 +12,12 @@ $query = array(
    	'date_back' => '05.10.2011',
 );
 
-$queryId = 1;
-
 $timetable = $TimetablePull->getTimetable($query);
-print_r($timetable);
 
-// для отладки, чтобы не ждать каждый раз api
-// $serializedTimetable = file_put_contents('/tmp/timetable.arr', serialize($timetable));
-// $timetable = unserialize(file_get_contents('/tmp/timetable.arr'));
+$userId = 1;
+$orderId = 1;
+$live = null;
 
 $pdo = new PDO($configDb['db'], $configDb['user'], $configDb['password'], array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 $TimetableModel = new Whale_Timetable_Model($pdo);
-$TimetableModel->save($timetable);
+$TimetableModel->save($timetable, $userId, $orderId, $live);

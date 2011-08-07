@@ -1,9 +1,7 @@
 <?php
 /**
  * Модель для сохранения предложений перелётов
- * Enter description here ...
- * @author xu
- *
+ * @author Dmitry Groza (boxfrommars@gmail.com)
  */
 class Whale_Timetable_Model 
 {
@@ -35,7 +33,7 @@ class Whale_Timetable_Model
 			INSERT INTO `offers_head` 
 				(`USERID`, `ORDERID`, `PRICE`, `OFFERDATE`, `LIVE`, `STATUS`) 
 			VALUES 
-				(1, 1, ?, NOW(), NULL, 1)');
+				(?, ?, ?, NOW(), ?, 1)');
 		
 		$this->_insertOfferPrepared = $this->_db->prepare('
 			INSERT INTO `offers` 
@@ -45,19 +43,32 @@ class Whale_Timetable_Model
 		');
 	}
 	
-	public function save($timetable) 
+	/**
+	 * @param array $timetable
+	 * @param int $userId id пользователя, подавшего заявку
+	 * @param int $orderId id заявки
+	 * @param int $live непонятно что
+	 */
+	public function save($timetable, $userId, $orderId, $live = null) 
 	{
 		foreach ($timetable as $flight) {
-			$this->saveFlight($flight);
+			$this->saveFlight($flight, $userId, $orderId, $live);
 		}
 	}
-	
-	public function saveFlight($flight)
+	/**
+	 * сохраняем предложения перелётов. пользуем транзакции
+	 * @param array $flight (перелёт из $timetable)
+	 * @param int $userId id пользователя, подавшего заявку
+	 * @param int $orderId id заявки
+	 * @param int $live непонятно что
+	 * @throws Exception 
+	 */
+	public function saveFlight($flight, $userId, $orderId, $live = null)
 	{
 		try {
 			$this->_db->beginTransaction();
 			/* TRANSACTION BEGIN */
-				$success = $this->_insertOfferHeadPrepared->execute(array($flight['price']));
+				$success = $this->_insertOfferHeadPrepared->execute(array($userId, $orderId, $flight['price'], $live));
 				if (!$success) {
 					$error = $this->_insertOfferHeadPrepared->errorInfo();
 					throw new Exception('inserting offer head failed with error ' . print_r($error, true));
