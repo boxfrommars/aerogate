@@ -11,7 +11,7 @@
 			),
 			'galileo' => array(
 				'client_id' => '1',
-				'url' => 'http://gateway.com/siren/'
+				'url' => 'http://gateway.com/galileo/'
 				'server_public_key' => 'file://' . __DIR__ . '/ServerKeyPublic.pem',    // путь к публичному ключу сервера
 				'client_private_key' => 'file://' . __DIR__ . '/ClientKeyPrivate.pem',  // путь к приватному ключу клиента
 			),
@@ -31,7 +31,7 @@
 	);
 	$timetable = Whale_Timetable_Pull->getTimetable($query);
 
-$timetable содержит массив вида:
+теперь $timetable содержит массив вида:
 
 	Array
 	(
@@ -85,7 +85,9 @@ $timetable содержит массив вида:
 использование Whale_Timetable_Model:
 ------------------------------------
 
-	$pdo = new PDO('mysql:host=localhost;dbname=aero', 'username', 'password', array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+	$pdo = new PDO('mysql:host=localhost;dbname=aero', 'username', 'password', 
+		array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 	$TimetableModel = new Whale_Timetable_Model($pdo);
 	$TimetableModel->save($timetable);
 
+пример базы для /Whale_Timetable_Model/ в папке deploy 
