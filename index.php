@@ -7,7 +7,7 @@ require_once 'config.php';
 $TimetablePull = new Whale_Timetable_Pull($config);
 
 $query = array(
-	'city_from' => 'MOW',
+	'city_from' => 'SVO',
 	'city_to' => 'KHV',
 	'date_to' => '03.10.2011',
    	'date_back' => '05.10.2011',
