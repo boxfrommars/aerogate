@@ -112,8 +112,7 @@
 по коду (неважно, ru или en) получить id аэропорта/самолёта/компании из базы:
 
 
-$TimetableModel = new Whale_Timetable_Model($pdo);
-
+	$TimetableModel = new Whale_Timetable_Model($pdo);
 	echo $TimetableModel->getAircompanyId('VV') . "\n";
 	echo $TimetableModel->getAirportId('SVO') . "\n";
 	echo $TimetableModel->getAirplaneId('737') . "\n";
